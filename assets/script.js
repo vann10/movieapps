@@ -4,55 +4,23 @@ let currentMovie = null;
 // Ganti fungsi checkLoginStatus Anda dengan yang ini
 
 function checkLoginStatus() {
-    $.ajax({
-        url: 'backend/check_session.php',
-        method: 'GET',
-        dataType: 'json',
-        success: function(response) {
-            // Ini akan berjalan JIKA server merespons dengan status 200 OK
-            // dan JSON yang valid.
-            console.log("AJAX Success! Response:", response); // Untuk debugging
+$.ajax({
+  url: 'backend/check_session.php',
+  method: 'GET',
+  dataType: 'json',
+  success: function(response) {
+    if (response.loggedIn) {
+      $('#welcome-container').html(`👋 Halo, <strong>${response.username}</strong>! Selamat datang kembali.`);
+    } else {
+      $('#welcome-container').html(`👋 Anda belum login. <a href="auth.html" class="text-blue-500 underline">Login di sini</a>`);
+    }
+  },
+  error: function(xhr, status, error) {
+    $('#welcome-container').html('<span class="text-red-500">Gagal memuat data login.</span>');
+    console.error("Error:", error);
+  }
+});
 
-            const navLinks = $('#nav-links');
-            const welcomeContainer = $('#welcome-container');
-            const favoriteActions = $('#favorite-actions');
-
-            if (response && response.loggedIn) {
-                welcomeContainer.html(`<h1 class="text-2xl font-bold text-yellow-500">Halo, ${response.username}!</h1>`);
-                navLinks.html(`
-                    <li><a href="index.html" class="hover:text-yellow-500">Home</a></li>
-                    <li><a href="#sinopsis" class="hover:text-yellow-500">Sinopsis</a></li>
-                    <li><a href="#details" class="hover:text-yellow-500">Detail</a></li>
-                    <li><a href="#" id="cast-link" class="hover:text-yellow-500">Pemeran</a></li>
-                    <li><a href="favorites.html" class="hover:text-yellow-500">Favorit Saya</a></li>
-                    <li><a href="backend/logout.php" class="text-red-500 hover:text-red-400">Logout</a></li>
-                `);
-                favoriteActions.show();
-            } else {
-                welcomeContainer.html('');
-                navLinks.html(`
-                    <li><a href="index.html" class="hover:text-yellow-500">Home</a></li>
-                    <li><a href="#sinopsis" class="hover:text-yellow-500">Sinopsis</a></li>
-                    <li><a href="#details" class="hover:text-yellow-500">Detail</a></li>
-                    <li><a href="#" id="cast-link" class="hover:text-yellow-500">Pemeran</a></li>
-                    <li><a href="auth.html" class="text-green-500 hover:text-green-400">Login/Registrasi</a></li>
-                `);
-                favoriteActions.hide();
-            }
-
-            $('#cast-link').on('click', toggleCastDetails);
-        },
-        error: function(xhr, status, error) {
-            // Ini akan berjalan JIKA terjadi error (404, 500, dll.)
-            console.error("AJAX Error! Status:", status);
-            console.error("Response Text:", xhr.responseText); // Ini sangat penting!
-            console.error("Error Thrown:", error);
-
-            // Beri tahu pengguna bahwa ada masalah
-            $('#welcome-container').html('<p class="text-red-500">Gagal memuat status login. Periksa console (F12) untuk detail.</p>');
-            $('#favorite-actions').hide();
-        }
-    });
 }
 
 
@@ -69,7 +37,6 @@ function toggleCastDetails(e) {
 
 $(document).ready(function () {
     // Panggil fungsi untuk memeriksa status login saat halaman dimuat
-    checkLoginStatus();
 
     const $darkModeToggle = $("#toggle-dark-mode");
     const $body = $("body");
@@ -106,6 +73,8 @@ $(document).ready(function () {
     });
 
     // Muat film default
+    checkLoginStatus();
+
     loadDefaultMovie();
 
     function loadDefaultMovie() {

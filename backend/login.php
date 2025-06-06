@@ -22,6 +22,7 @@ if ($result->num_rows === 1) {
         // Login berhasil, buat session
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['username'] = $user['username'];
+        
 
         // Logika untuk "Remember Me" (Cookie)
         if ($remember_me) {
