@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Favorit Saya</title>
+    <link rel="stylesheet" href="assets/styles.css" />
+    <link rel="stylesheet" href="assets/favorites.css" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+  </head>
+
+  <body>
+    <div id="toggle-dark-mode-container">
+      <button id="toggle-dark-mode">🔆</button>
+    </div>
+
+    <div class="favorites-container">
+      <a href="index.html" class="back-button">
+        <i class="fas fa-arrow-left"></i> Kembali ke Pencarian
+      </a>
+
+      <header>
+        <h1>🎬 Koleksi Film Favorit Saya</h1>
+        <p>Kelola film-film yang ingin Anda tonton atau telah ditonton</p>
+      </header>
+
+      <main>
+        <div id="favorites-list" class="favorites-grid"></div>
+      </main>
+
+      <footer>
+        <p>&copy;Your Favorites Movie</p>
+      </footer>
+    </div>
+
+    <script src="assets/favorites.js"></script>
+  </body>
+</html>

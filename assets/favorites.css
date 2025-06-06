@@ -1,0 +1,270 @@
+.favorites-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.favorites-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 25px;
+  margin-top: 30px;
+  width: 1161px;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.movie-card {
+      border-bottom: 1px solid #d4af37;
+      border-right: 1px solid #d4af37;
+      border-left: 1px solid #d4af37;
+  background-color: #1f1f1f;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+  transition: transform 0.2s, box-shadow 0.2s;
+  position: relative;
+}
+
+.movie-card:hover {
+      border-top: 2px solid #d4af37;
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+}
+
+.movie-poster-container {
+  position: relative;
+  overflow: hidden;
+  height: 330px;
+}
+
+.movie-poster {
+  border: 1px solid #d4af37;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transition: transform 0.3s;
+}
+
+.movie-card:hover .movie-poster {
+  transform: scale(1.05);
+}
+
+.movie-info {
+  padding: 15px;
+}
+
+.movie-title {
+  text-align: center;
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 10px 0;
+  color: #fff;
+}
+
+/* Star Rating */
+.rating-container {
+  margin-bottom: 15px;
+}
+
+.star-rating {
+  display: flex;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+}
+
+.star-rating .star {
+  color: #444;
+  font-size: 18px;
+  cursor: pointer;
+  transition: color 0.2s;
+  margin: 0 2px;
+}
+
+.star-rating .star.active {
+  color: #ff9f1c;
+}
+
+.star-rating:hover .star {
+  color: #ff9f1c;
+}
+
+.star-rating .star:hover ~ .star {
+  color: #444;
+}
+
+/* Action Buttons */
+.action-buttons {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 15px;
+}
+
+.action-button {
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.3s;
+  color: #666;
+  background: none;
+  border: none;
+  padding: 5px;
+}
+
+.action-button.active {
+  color: #ff375f;
+  transform: scale(1.1);
+}
+
+.action-button.watched.active {
+  color: #4CAF50;
+}
+
+.action-button.watchlist.active {
+  color: #2196F3;
+}
+
+.action-button:hover {
+  transform: scale(1.2);
+}
+
+/* Delete Button */
+.delete-button {
+  width: 100%;
+  padding: 8px 0;
+  background-color: rgba(220, 53, 69, 0.1);
+  color: #dc3545;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.delete-button:hover {
+  background-color: rgba(220, 53, 69, 0.3);
+}
+
+.delete-button i {
+  margin-right: 6px;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #999;
+}
+
+.empty-state i {
+  font-size: 50px;
+  margin-bottom: 20px;
+  color: #555;
+}
+
+.empty-state h3 {
+  margin-bottom: 15px;
+  font-size: 22px;
+  color: #ccc;
+}
+
+/* Header Styling */
+header {
+  text-align: center;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #333;
+  margin-bottom: 30px;
+}
+
+header h1 {
+  font-size: 32px;
+  margin-bottom: 10px;
+  color: #fff;
+}
+
+/* Dark Mode Integration */
+body.dark-mode .movie-card {
+  background-color: #1a1a1a;
+}
+
+body.dark-mode .status-selector select {
+  background-color: #2a2a2a;
+  border-color: #444;
+}
+
+/* Back Button */
+.back-button {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px;
+  background-color: #2c2c2c;
+  color: #fff;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s;
+  margin-bottom: 20px;
+}
+
+.back-button:hover {
+  background-color: #444;
+}
+
+.back-button i {
+  margin-right: 8px;
+}
+
+footer {
+  text-align: center;
+  margin-top: 50px;
+  padding: 20px;
+  border-top: 1px solid #333;
+}
+
+.change-poster-btn {
+  width: 100%;
+  padding: 8px 0;
+  background-color: rgba(66, 204, 31, 0.1);
+  color: rgb(74, 204, 74);
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.change-poster-btn:hover {
+  background-color: rgba(66, 204, 31, 0.3);
+}
+
+.poster-input {
+    background-color: #2196F3;
+}
+
+.reset-poster-btn {
+  width: 100%;
+  padding: 8px 0;
+  background-color: rgba(255, 159, 26, 0.1);
+  color: #ffad3a;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.reset-poster-btn:hover {
+  background-color: rgba(255, 160, 28, 0.3);
+}

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Se7en</title>
+    <link rel="stylesheet" href="assets/styles.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  </head>
+  
+  <body>    
+    <div id="search-form" style="margin: 20px 0;">
+      <input type="text" id="search-input" placeholder="Masukkan judul film..." style="padding: 10px; border-radius: 5px; width: 250px;">
+      <button id="search-button" style="padding: 10px 20px; border-radius: 5px; background-color: #d4af37; border: none; color: black;">Cari</button>
+    </div>
+    <header>
+      <h1 id="main-title"></h1>
+      <img
+        width="20%"
+        alt="Poster film"
+        id="movie-poster"/>
+      <div id="favorite-actions" style="margin-top: 20px;">
+        <button id="add-favorite" style="padding: 10px 20px; background-color: chocolate; border: none; border-radius: 5px; font-weight: bold;">
+          ⭐ Tambahkan ke Watchlist
+        </button>
+      </div>
+      <div id="movie-sinopsis"></div>
+      <ul id="movie-details"></ul>      
+    </header>
+
+    <div id="toggle-dark-mode-container">
+      <button id="toggle-dark-mode">🔆</button>
+    </div>
+
+    <nav>
+      <ul>
+        <li><a href="#sinopsis">Sinopsis</a></li>
+        <li><a href="#details">Detail Film</a></li>
+        <li><a href="#" id="cast-link">Pemeran</a></li>
+        <li><a href="favorites.html">Favorites</a></li>
+      </ul>
+    </nav>
+
+    
+    <main>
+      <article>
+        <section id="sinopsis">
+          <h2>Sinopsis Film</h2>
+          <p id="sinopsis-text">
+          </p>
+        </section>
+        
+        <section id="details">
+          <h2>Detail Film</h2>
+          <ul id="movie-details-dynamic" style="list-style-type: none;padding-left: 0;">
+            <li><h3>Sutradara</h3></li>
+            <li><h3>Penulis</h3></li>
+            <li><h3>Pemeran</h3></li>
+            <li><h3>Tahun Rilis</h3></li>
+            <li><h3>Genre</h3></li>
+          </ul>
+        </section>
+        
+        <aside>
+          <h3>Taglines</h3>
+          <p id="tagline-text">
+            <em
+            ></em
+            >
+          </p>
+        </aside>
+      </article>
+      
+      <article id="cast-details" style="display: none;">
+        <h2>Detail Pemeran</h2>
+        <div id="cast-container"></div>
+      </article>
+    </main>
+
+    <footer>
+      <p id="footer-text"></p>
+    </footer>
+
+    <script src="assets/script.js"></script>
+  </body>
+</html>
