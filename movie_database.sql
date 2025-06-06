@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: May 19, 2025 at 02:12 PM
+-- Generation Time: Jun 06, 2025 at 04:38 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -32,26 +32,38 @@ CREATE TABLE `favorites` (
   `movie_id` int(11) NOT NULL,
   `title` varchar(255) NOT NULL,
   `poster_path` varchar(255) DEFAULT NULL,
-  `users_id` int(11) DEFAULT 1,
+  `users_id` int(11) DEFAULT NULL,
   `status` enum('watchlist','watched') DEFAULT 'watchlist',
   `rating` tinyint(4) DEFAULT NULL,
   `loved` tinyint(1) DEFAULT 0,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `custom_poster` varchar(255) DEFAULT NULL
+  `custom_poster` varchar(255) DEFAULT NULL,
+  `user_id` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `users`
+--
+
+CREATE TABLE `users` (
+  `id` int(11) NOT NULL,
+  `username` varchar(50) NOT NULL,
+  `email` varchar(100) NOT NULL,
+  `password` varchar(255) NOT NULL,
+  `remember_token` varchar(64) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `favorites`
+-- Dumping data for table `users`
 --
 
-INSERT INTO `favorites` (`id`, `movie_id`, `title`, `poster_path`, `users_id`, `status`, `rating`, `loved`, `created_at`, `custom_poster`) VALUES
-(10, 807, 'Se7en', '/191nKfP0ehp3uIvWqgPbFmI4lv9.jpg', 1, 'watchlist', 5, 0, '2025-05-16 14:29:28', NULL),
-(14, 693134, 'Dune: Part Two', '/6izwz7rsy95ARzTR3poZ8H6c5pp.jpg', 1, 'watchlist', 2, 0, '2025-05-16 14:31:33', NULL),
-(20, 299536, 'Avengers: Infinity War', '/7WsyChQLEftFiDOVTGkv3hFpyyt.jpg', 1, 'watchlist', NULL, 1, '2025-05-16 14:39:57', NULL),
-(28, 157336, 'Interstellar', '/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg', 1, 'watchlist', NULL, 0, '2025-05-18 23:10:23', NULL),
-(29, 324857, 'Spider-Man: Into the Spider-Verse', '/iiZZdoQBEYBv6id8su7ImL0oCbD.jpg', 1, 'watchlist', NULL, 0, '2025-05-18 23:11:12', NULL),
-(31, 246355, 'Saw', '/uvjBl6LHmb5JpAbmSZzeWA1c7Sv.jpg', 1, 'watchlist', NULL, 0, '2025-05-18 23:13:33', NULL),
-(32, 215, 'Saw II', '/gTnaTysN8HsvVQqTRUh8m35mmUA.jpg', 1, 'watchlist', NULL, 0, '2025-05-18 23:13:52', NULL);
+INSERT INTO `users` (`id`, `username`, `email`, `password`, `remember_token`, `created_at`, `updated_at`) VALUES
+(1, 'admin', 'admin@example.com', '$2y$10$ujwz8w2TSAsI8t8Alqs/HOM1KiPStXXmiEHFk3cCX0d9./hU3D/rG', 'c7d0deb314eddbf04221b29fed3c97f4209a58ec200b57f1dc81ba80e2256a48', '2025-06-03 12:13:37', '2025-06-05 14:21:21'),
+(16, 'van', 'example@gmail.com', '$2y$10$1r/sW42z65e4mGMNLb2AzOlTE.FwrBXSo7TP2JfsELEOvP7XIh6aK', 'c94bfeac1df3b4f6929963f354dab0b5c6f51a059eea27bdb75dd9ce29d3a37f', '2025-06-05 13:36:54', '2025-06-06 00:56:23');
 
 --
 -- Indexes for dumped tables
@@ -62,7 +74,18 @@ INSERT INTO `favorites` (`id`, `movie_id`, `title`, `poster_path`, `users_id`, `
 --
 ALTER TABLE `favorites`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `movie_id` (`movie_id`);
+  ADD UNIQUE KEY `movie_id` (`movie_id`),
+  ADD KEY `idx_user_favorites` (`user_id`);
+
+--
+-- Indexes for table `users`
+--
+ALTER TABLE `users`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `username` (`username`),
+  ADD UNIQUE KEY `email` (`email`),
+  ADD KEY `idx_username` (`username`),
+  ADD KEY `idx_remember_token` (`remember_token`);
 
 --
 -- AUTO_INCREMENT for dumped tables
@@ -72,7 +95,23 @@ ALTER TABLE `favorites`
 -- AUTO_INCREMENT for table `favorites`
 --
 ALTER TABLE `favorites`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=63;
+
+--
+-- AUTO_INCREMENT for table `users`
+--
+ALTER TABLE `users`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+
+--
+-- Constraints for dumped tables
+--
+
+--
+-- Constraints for table `favorites`
+--
+ALTER TABLE `favorites`
+  ADD CONSTRAINT `favorites_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

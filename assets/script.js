@@ -1,278 +1,221 @@
 // Variabel global untuk menyimpan data film saat ini
 let currentMovie = null;
 
+// Ganti fungsi checkLoginStatus Anda dengan yang ini
+
+function checkLoginStatus() {
+    $.ajax({
+        url: 'backend/check_session.php',
+        method: 'GET',
+        dataType: 'json',
+        success: function(response) {
+            // Ini akan berjalan JIKA server merespons dengan status 200 OK
+            // dan JSON yang valid.
+            console.log("AJAX Success! Response:", response); // Untuk debugging
+
+            const navLinks = $('#nav-links');
+            const welcomeContainer = $('#welcome-container');
+            const favoriteActions = $('#favorite-actions');
+
+            if (response && response.loggedIn) {
+                welcomeContainer.html(`<h1 class="text-2xl font-bold text-yellow-500">Halo, ${response.username}!</h1>`);
+                navLinks.html(`
+                    <li><a href="index.html" class="hover:text-yellow-500">Home</a></li>
+                    <li><a href="#sinopsis" class="hover:text-yellow-500">Sinopsis</a></li>
+                    <li><a href="#details" class="hover:text-yellow-500">Detail</a></li>
+                    <li><a href="#" id="cast-link" class="hover:text-yellow-500">Pemeran</a></li>
+                    <li><a href="favorites.html" class="hover:text-yellow-500">Favorit Saya</a></li>
+                    <li><a href="backend/logout.php" class="text-red-500 hover:text-red-400">Logout</a></li>
+                `);
+                favoriteActions.show();
+            } else {
+                welcomeContainer.html('');
+                navLinks.html(`
+                    <li><a href="index.html" class="hover:text-yellow-500">Home</a></li>
+                    <li><a href="#sinopsis" class="hover:text-yellow-500">Sinopsis</a></li>
+                    <li><a href="#details" class="hover:text-yellow-500">Detail</a></li>
+                    <li><a href="#" id="cast-link" class="hover:text-yellow-500">Pemeran</a></li>
+                    <li><a href="auth.html" class="text-green-500 hover:text-green-400">Login/Registrasi</a></li>
+                `);
+                favoriteActions.hide();
+            }
+
+            $('#cast-link').on('click', toggleCastDetails);
+        },
+        error: function(xhr, status, error) {
+            // Ini akan berjalan JIKA terjadi error (404, 500, dll.)
+            console.error("AJAX Error! Status:", status);
+            console.error("Response Text:", xhr.responseText); // Ini sangat penting!
+            console.error("Error Thrown:", error);
+
+            // Beri tahu pengguna bahwa ada masalah
+            $('#welcome-container').html('<p class="text-red-500">Gagal memuat status login. Periksa console (F12) untuk detail.</p>');
+            $('#favorite-actions').hide();
+        }
+    });
+}
+
+
+function toggleCastDetails(e) {
+    if (e) e.preventDefault();
+    const $castDetails = $("#cast-details");
+    if ($castDetails.is(":visible")) {
+        $castDetails.slideUp();
+    } else {
+        $castDetails.slideDown();
+    }
+}
+
+
 $(document).ready(function () {
-  const $darkModeToggle = $("#toggle-dark-mode");
-  const $body = $("body");
-  const $searchInput = $("#search-input");
-  const $searchButton = $("#search-button");
-  const $moviePoster = $("#movie-poster");
-  const $movieTitle = $("#main-title");
-  const $castContainer = $("#cast-container");
-  const apiKey = "f39c5ab2232b117332a00650f0364756";
+    // Panggil fungsi untuk memeriksa status login saat halaman dimuat
+    checkLoginStatus();
 
-  // Dark mode toggle functionality
-  function enableDarkMode() {
-    $body.addClass("dark-mode");
-    $darkModeToggle.text("🌙");
-    $(".theme-sensitive").attr("data-theme", "dark");
-  }
+    const $darkModeToggle = $("#toggle-dark-mode");
+    const $body = $("body");
+    const $html = $("html");
+    const $searchInput = $("#search-input");
+    const $searchButton = $("#search-button");
+    const $moviePoster = $("#movie-poster");
+    const $castContainer = $("#cast-container");
+    const apiKey = "f39c5ab2232b117332a00650f0364756"; // Ganti dengan API key Anda
 
-  function disableDarkMode() {
-    $body.removeClass("dark-mode");
-    $darkModeToggle.text("🔆");
-    $(".theme-sensitive").attr("data-theme", "light");
-  }
-
-  if (localStorage.getItem("darkMode") === "enabled") {
-    enableDarkMode();
-  }
-
-  $darkModeToggle.on("click", function () {
-    $body.addClass("theme-transition");
-    if ($body.hasClass("dark-mode")) {
-      disableDarkMode();
-      localStorage.setItem("darkMode", "disabled");
-    } else {
-      enableDarkMode();
-      localStorage.setItem("darkMode", "enabled");
+    // Fungsi Dark/Light Mode
+    function enableDarkMode() {
+        $html.addClass("dark");
+        $darkModeToggle.text("🌙");
+        localStorage.setItem("darkMode", "enabled");
     }
-    setTimeout(() => {
-      $body.removeClass("theme-transition");
-    }, 500);
-  });
 
-  // Load default movie on page load
-  if ($("#search-button").length) {
+    function disableDarkMode() {
+        $html.removeClass("dark");
+        $darkModeToggle.text("🔆");
+        localStorage.setItem("darkMode", "disabled");
+    }
+
+    if (localStorage.getItem("darkMode") === "enabled") {
+        enableDarkMode();
+    }
+
+    $darkModeToggle.on("click", function () {
+        if ($html.hasClass("dark")) {
+            disableDarkMode();
+        } else {
+            enableDarkMode();
+        }
+    });
+
+    // Muat film default
     loadDefaultMovie();
-  }
 
-  function loadDefaultMovie() {
-    const defaultMovieId = 807;
-    const url = `https://api.themoviedb.org/3/movie/${defaultMovieId}?api_key=${apiKey}&append_to_response=credits`;
+    function loadDefaultMovie() {
+        const defaultMovieId = 807; // Se7en
+        loadFilmDataById(defaultMovieId);
+    }
 
-    $.getJSON(url, function (data) {
-      // Simpan data film saat ini
-      currentMovie = data;
+    function loadFilmDataById(movieId) {
+        const url = `https://api.themoviedb.org/3/movie/${movieId}?api_key=${apiKey}&append_to_response=credits,videos`;
+        $.getJSON(url, function (data) {
+            updatePageWithMovieData(data);
+        }).fail(function() {
+            alert("Gagal memuat data film. Periksa koneksi atau API key.");
+        });
+    }
 
-      // Judul dan Poster
-      $("#main-title").text(data.title);
-      $moviePoster.attr(
-        "src",
-        `https://image.tmdb.org/t/p/w500${data.poster_path}`
-      );
+    function searchAndLoadFilm(title) {
+        const searchUrl = `https://api.themoviedb.org/3/search/movie?api_key=${apiKey}&query=${encodeURIComponent(title)}`;
+        $.getJSON(searchUrl, function (searchData) {
+            if (searchData.results && searchData.results.length > 0) {
+                loadFilmDataById(searchData.results[0].id);
+            } else {
+                alert("Film tidak ditemukan!");
+            }
+        }).fail(function() {
+            alert("Gagal mencari film.");
+        });
+    }
+    
+    function updatePageWithMovieData(data) {
+        currentMovie = data;
 
-      // Sinopsis dan Tagline
-      $("#sinopsis-text").text(data.overview);
-      $("#tagline-text").html(`<em>${data.tagline || "Tidak tersedia."}</em>`);
+        $("#main-title").text(data.title);
+        $moviePoster.attr("src", data.poster_path ? `https://image.tmdb.org/t/p/w500${data.poster_path}` : 'https://placehold.co/500x750/1f2937/a3a3a3?text=No+Image');
+        $("#sinopsis-text").text(data.overview || "Sinopsis tidak tersedia.");
+        $("#tagline-text").html(`<em>${data.tagline || "Tagline tidak tersedia."}</em>`);
 
-      // Tahun Rilis, Genre, Sutradara, Penulis, Pemeran
-      const director =
-        data.credits.crew.find((p) => p.job === "Director")?.name ||
-        "Tidak diketahui";
-      const writers =
-        data.credits.crew
-          .filter((p) => p.job === "Writer" || p.department === "Writing")
-          .map((p) => p.name)
-          .join(", ") || "Tidak diketahui";
-      const releaseYear = data.release_date
-        ? data.release_date.split("-")[0]
-        : "N/A";
-      const genres = data.genres.map((g) => g.name).join(", ");
-      const actors = data.credits.cast
-        .slice(0, 5)
-        .map((c) => c.name)
-        .join(", ");
+        const director = data.credits.crew.find((p) => p.job === "Director")?.name || "Tidak diketahui";
+        const releaseYear = data.release_date ? data.release_date.split("-")[0] : "N/A";
+        const genres = data.genres.map((g) => g.name).join(", ") || "Tidak diketahui";
 
-      $("#movie-details-dynamic").html(`
-        <li><h3>Sutradara</h3> ${director}</li>
-        <li><h3>Penulis</h3> ${writers}</li>
-        <li><h3>Pemeran</h3> ${actors}</li>
-        <li><h3>Tahun Rilis</h3> ${releaseYear}</li>
-        <li><h3>Genre</h3> ${genres}</li>
-      `);
+        $("#movie-details-dynamic").html(`
+            <li class="mb-2"><strong>Sutradara:</strong> ${director}</li>
+            <li class="mb-2"><strong>Tahun Rilis:</strong> ${releaseYear}</li>
+            <li class="mb-2"><strong>Genre:</strong> ${genres}</li>
+        `);
 
-      $("#footer-text").html(
-        `&copy; ${releaseYear} ${data.title}. All rights reserved.`
-      );
+        $("#footer-text").html(`&copy; ${releaseYear} ${data.title}. All rights reserved.`);
 
-      // Pemeran (Cast Card)
-      $castContainer.empty();
-      data.credits.cast.slice(0, 5).forEach((actor) => {
-        const profileUrl = actor.profile_path
-          ? `https://image.tmdb.org/t/p/w185${actor.profile_path}`
-          : "https://via.placeholder.com/185x278?text=No+Image";
+        $castContainer.empty();
+        data.credits.cast.slice(0, 6).forEach((actor) => {
+            const profileUrl = actor.profile_path ? `https://image.tmdb.org/t/p/w185${actor.profile_path}` : "https://placehold.co/185x278/1f2937/a3a3a3?text=No+Image";
+            $castContainer.append(`
+                <div class="text-center">
+                    <img src="${profileUrl}" alt="${actor.name}" class="rounded-lg mx-auto mb-2" />
+                    <h3 class="font-bold">${actor.name}</h3>
+                    <p class="text-sm text-gray-400">as ${actor.character}</p>
+                </div>
+            `);
+        });
+        // Pastikan container cast menggunakan grid
+        $castContainer.addClass("grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4");
+    }
 
-        const card = `
-          <div class="cast-card">
-            <img src="${profileUrl}" alt="${actor.name}" />
-            <h3>${actor.name}</h3>
-            <p><strong>as ${actor.character}</strong></p>
-          </div>
-        `;
-        $castContainer.append(card);
-      });
+    $searchButton.on("click", function () {
+        const title = $searchInput.val();
+        if (title) {
+            searchAndLoadFilm(title);
+        } else {
+            alert("Harap masukkan judul film!");
+        }
     });
-  }
+     $searchInput.on('keypress', function(e) {
+        if(e.which == 13) { // Tombol Enter
+            $searchButton.click();
+        }
+    });
 
-  function loadFilmData(title) {
-    const searchUrl = `https://api.themoviedb.org/3/search/movie?api_key=${apiKey}&query=${encodeURIComponent(
-      title
-    )}`;
+    // Event untuk tombol "tambah ke favorit"
+    $("#add-favorite").on("click", function () {
+        if (currentMovie) {
+            addToFavorites(currentMovie);
+        } else {
+            alert("Film belum dimuat.");
+        }
+    });
 
-    $.ajax({
-      url: searchUrl,
-      method: "GET",
-      dataType: "json",
-      success: function (searchData) {
-        if (searchData.results && searchData.results.length > 0) {
-          const movieId = searchData.results[0].id;
-          const detailUrl = `https://api.themoviedb.org/3/movie/${movieId}?api_key=${apiKey}&append_to_response=credits`;
-
-          $.ajax({
-            url: detailUrl,
-            method: "GET",
+    function addToFavorites(movie) {
+        $.ajax({
+            url: "backend/favorites.php",
+            method: "POST",
+            contentType: "application/json",
+            data: JSON.stringify({
+                movie_id: movie.id,
+                title: movie.title,
+                poster_path: movie.poster_path,
+                status: "watchlist",
+            }),
             dataType: "json",
-            success: function (data) {
-              currentMovie = data;
-
-              $("#main-title").text(data.title);
-              $moviePoster.attr(
-                "src",
-                `https://image.tmdb.org/t/p/w500${data.poster_path}`
-              );
-              $("#sinopsis-text").text(data.overview);
-
-              const director =
-                data.credits.crew.find((person) => person.job === "Director")
-                  ?.name || "Tidak diketahui";
-              const writers =
-                data.credits.crew
-                  .filter(
-                    (person) =>
-                      person.job === "Writer" || person.department === "Writing"
-                  )
-                  .map((p) => p.name)
-                  .join(", ") || "Tidak diketahui";
-              const releaseYear = data.release_date
-                ? data.release_date.split("-")[0]
-                : "N/A";
-              const genres = data.genres.map((g) => g.name).join(", ");
-
-              const dynamicDetails = `
-                <li><h3>Sutradara</h3> ${director}</li>
-                <li><h3>Penulis</h3> ${writers}</li>
-                <li><h3>Pemeran</h3> ${data.credits.cast
-                  .slice(0, 5)
-                  .map((c) => c.name)
-                  .join(", ")}</li>
-                <li><h3>Tahun Rilis</h3> ${releaseYear}</li>
-                <li><h3>Genre</h3> ${genres}</li>
-              `;
-              $("#movie-details-dynamic").html(dynamicDetails);
-
-              $("#tagline-text").html(
-                `<em>${data.tagline || "Tidak tersedia."}</em>`
-              );
-              $("#footer-text").html(
-                `&copy; ${releaseYear} ${data.title}. All rights reserved.`
-              );
-
-              $castContainer.empty();
-              data.credits.cast.slice(0, 5).forEach((actor) => {
-                const profileUrl = actor.profile_path
-                  ? `https://image.tmdb.org/t/p/w185${actor.profile_path}`
-                  : "https://via.placeholder.com/185x278?text=No+Image";
-
-                const card = `
-                  <div class="cast-card">
-                    <img src="${profileUrl}" alt="${actor.name}" />
-                    <h3>${actor.name}</h3>
-                    <p><strong>as ${actor.character}</strong></p>
-                  </div>
-                `;
-                $castContainer.append(card);
-              });
+            success: function (response) {
+                if(response.success){
+                    alert(response.message || "Film berhasil ditambahkan!");
+                } else {
+                    alert(response.error || "Gagal menambahkan film.");
+                }
             },
-            error: function (xhr, status, error) {
-              console.error("Error fetching movie details:", error);
-              alert(`Gagal memuat detail film: ${error}`);
+            error: function (xhr) {
+                 const response = xhr.responseJSON;
+                 alert(response.error || "Terjadi kesalahan. Mungkin Anda sudah menambahkan film ini.");
             },
-          });
-        } else {
-          alert("Film tidak ditemukan!");
-        }
-      },
-      error: function (xhr, status, error) {
-        console.error("Error searching for movie:", error);
-        alert(`Gagal mencari film: ${error}`);
-      },
-    });
-  }
-
-  $searchButton.on("click", function () {
-    const title = $searchInput.val();
-    if (title) {
-      loadFilmData(title);
-    } else {
-      alert("Harap masukkan judul film!");
+        });
     }
-  });
-
-  // Toggle cast details visibility
-  const $castLink = $("#cast-link");
-  const $castDetails = $("#cast-details");
-  $castLink.on("click", function (e) {
-    e.preventDefault();
-    if ($castDetails.hasClass("visible")) {
-      $castDetails.hide().removeClass("visible");
-    } else {
-      $castDetails.show();
-      $castDetails.addClass("visible");
-    }
-  });
-
-  // Add poster container styling
-  if ($moviePoster.length) {
-    const $posterContainer = $moviePoster.parent();
-    $posterContainer.addClass("poster-container");
-  }
-
-  // Add to favorites functionality
-  $("#add-favorite").on("click", function () {
-    if (currentMovie) {
-      addToFavorites(currentMovie);
-    } else {
-      alert("Film belum dimuat.");
-    }
-  });
-
-  function addToFavorites(movie) {
-    $.ajax({
-      url: "backend/favorites.php",
-      method: "POST",
-      contentType: "application/json",
-      dataType: "json",
-      data: JSON.stringify({
-        movie_id: movie.id,
-        title: movie.title,
-        poster_path: movie.poster_path,
-        status: "watchlist",
-      }),
-      success: function (response) {
-        console.log("Server response:", response);
-        alert("✅ Film berhasil ditambahkan ke favorit!");
-      },
-      error: function (xhr, status, error) {
-        const responseText = xhr.responseText || error;
-
-        if (xhr.status === 409 || responseText.includes("Duplicate")) {
-          alert("⚠️ Film sudah ditambahkan ke favorit!");
-        } else {
-          console.error("Gagal menambahkan:", responseText);
-          alert(`❌ Gagal menambahkan ke favorit: ${responseText}`);
-        }
-      },
-    });
-  }
 });

@@ -1,73 +1,82 @@
 <?php
+// File: backend/reset_poster.php
+
+// Memulai session dan memeriksa login melalui session_config.php
+require_once 'session_config.php';
+require_once 'db_connection.php'; // Koneksi ke database
+
 header('Content-Type: application/json');
 
+// 1. Cek jika user sudah login
+if (!isset($_SESSION['user_id'])) {
+    http_response_code(401); // Unauthorized
+    echo json_encode(["success" => false, "message" => "Akses ditolak. Anda harus login terlebih dahulu."]);
+    exit();
+}
+
+$logged_in_user_id = $_SESSION['user_id']; // ID pengguna yang sedang login
+
 try {
-    ob_start();
-
-    $host = 'localhost';
-    $user = 'root';
-    $pass = '';
-    $db   = 'movie_database'; 
-    $conn = new mysqli($host, $user, $pass, $db);
-
-    if ($conn->connect_error) {
-        throw new Exception("Koneksi database gagal: " . $conn->connect_error);
-    }
-
-    $debug_info = [];
-    $debug_info['request_method'] = $_SERVER['REQUEST_METHOD'];
-    $debug_info['post_data'] = $_POST;
-
+    // Pastikan request adalah POST
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        throw new Exception('Metode tidak diizinkan.');
+        throw new Exception('Metode request tidak diizinkan.');
     }
 
-    if (!isset($_POST['id'])) {
-        throw new Exception("ID film tidak ditemukan.");
+    // Validasi input: ID film (favorit) harus ada
+    if (!isset($_POST['id'])) { // 'id' adalah ID dari tabel favorites
+        throw new Exception("ID film favorit tidak ditemukan dalam request.");
     }
 
-    $id = intval($_POST['id']);
-    $debug_info['id'] = $id;
+    $favorite_id = intval($_POST['id']);
 
-    $check_query = "SELECT id, custom_poster FROM favorites WHERE id = $id";
-    $result = $conn->query($check_query);
-    
-    if (!$result || $result->num_rows === 0) {
-        throw new Exception("Film dengan ID $id tidak ditemukan.");
-    }
-    
-    $film_data = $result->fetch_assoc();
-    $custom_poster_path = $film_data['custom_poster'];
-    $debug_info['current_poster'] = $custom_poster_path;
-    
-    if ($custom_poster_path && file_exists("../" . $custom_poster_path)) {
-        $delete_result = unlink("../" . $custom_poster_path);
-        $debug_info['file_delete'] = $delete_result ? "Success" : "Failed";
+    // 2. Dapatkan path custom_poster saat ini dan verifikasi kepemilikan
+    $stmt_select = $conn->prepare("SELECT custom_poster FROM favorites WHERE id = ? AND user_id = ?");
+    $stmt_select->bind_param("ii", $favorite_id, $logged_in_user_id);
+    $stmt_select->execute();
+    $result_select = $stmt_select->get_result();
+
+    if ($result_select->num_rows === 0) {
+        throw new Exception("Film favorit tidak ditemukan atau Anda tidak memiliki izin untuk mereset posternya.");
     }
 
-    $sql = "UPDATE favorites SET custom_poster = NULL WHERE id = $id";
-    $debug_info['sql'] = $sql;
+    $film_data = $result_select->fetch_assoc();
+    $current_custom_poster = $film_data['custom_poster'];
+    $stmt_select->close();
 
-    $query_result = $conn->query($sql);
-    $debug_info['query_result'] = $query_result ? "Success" : "Failed: " . $conn->error;
-
-    if (!$query_result) {
-        throw new Exception("Gagal mereset poster di database: " . $conn->error);
+    // Hapus file poster kustom fisik jika ada
+    if ($current_custom_poster) {
+        $file_path_to_delete = "../" . $current_custom_poster; // Path relatif dari file PHP ini ke poster
+        if (file_exists($file_path_to_delete)) {
+            if (!unlink($file_path_to_delete)) {
+                // Opsional: Log error ini, tapi jangan hentikan proses reset di DB
+                error_log("Gagal menghapus file poster fisik: " . $file_path_to_delete);
+            }
+        }
     }
+
+    // 3. Update custom_poster menjadi NULL di database HANYA untuk film favorit milik user ini
+    $stmt_update = $conn->prepare("UPDATE favorites SET custom_poster = NULL WHERE id = ? AND user_id = ?");
+    $stmt_update->bind_param("ii", $favorite_id, $logged_in_user_id);
+
+    if (!$stmt_update->execute()) {
+        throw new Exception("Gagal mereset poster di database: " . $stmt_update->error);
+    }
+    $stmt_update->close();
 
     echo json_encode([
         "success" => true,
-        "message" => "Poster berhasil direset ke default.",
-        "debug" => $debug_info
+        "message" => "Poster berhasil direset ke default."
     ]);
-    exit;
+
 } catch (Exception $e) {
-    $debug = ob_get_clean();
-    http_response_code(500);
+    http_response_code(400); // Bad Request atau error lainnya
     echo json_encode([
         "success" => false,
-        "message" => $e->getMessage(),
-        "debug" => $debug_info ?? []
+        "message" => $e->getMessage()
     ]);
-    exit;
+} finally {
+    if (isset($conn)) {
+        $conn->close();
+    }
 }
+?>

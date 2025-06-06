@@ -1,122 +1,118 @@
 <?php
+// File: backend/upload_poster.php
+
+// Memulai session dan memeriksa login melalui session_config.php
+// Ini juga akan menangani auto-login via cookie jika session belum ada.
+require_once 'session_config.php';
+require_once 'db_connection.php'; // Koneksi ke database
+
 header('Content-Type: application/json');
 
+// 1. Cek jika user sudah login (dilakukan di session_config.php, tapi kita bisa periksa lagi di sini)
+if (!isset($_SESSION['user_id'])) {
+    http_response_code(401); // Unauthorized
+    echo json_encode(["success" => false, "message" => "Akses ditolak. Anda harus login terlebih dahulu."]);
+    exit();
+}
+
+$logged_in_user_id = $_SESSION['user_id']; // ID pengguna yang sedang login
+
 try {
-    $host = 'localhost';
-    $user = 'root';
-    $pass = '';
-    $db   = 'movie_database'; 
-    $conn = new mysqli($host, $user, $pass, $db);
-
-    if ($conn->connect_error) {
-        throw new Exception("Koneksi database gagal: " . $conn->connect_error);
-    }
-
-    $debug_info = [];
-    $debug_info['request_method'] = $_SERVER['REQUEST_METHOD'];
-    $debug_info['post_data'] = $_POST;
-    $debug_info['files_data'] = isset($_FILES) ? array_keys($_FILES) : 'No files';
-
+    // Pastikan request adalah POST
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        throw new Exception('Metode tidak diizinkan.');
+        throw new Exception('Metode request tidak diizinkan.');
     }
 
+    // Validasi input: file poster dan ID film (favorit) harus ada
     if (!isset($_FILES['poster']) || !isset($_POST['film_id'])) {
-        $debug_info['missing'] = [
-            'poster' => !isset($_FILES['poster']),
-            'film_id' => !isset($_POST['film_id'])
-        ];
-        throw new Exception("Data tidak lengkap.");
+        throw new Exception("Data tidak lengkap. File poster dan ID film diperlukan.");
     }
 
-    $film_id = intval($_POST['film_id']);
-    $debug_info['film_id'] = $film_id;
+    $favorite_id = intval($_POST['film_id']); // Ini adalah ID dari tabel 'favorites'
 
-    $check_query = "SELECT id FROM favorites WHERE id = $film_id";
-    $result = $conn->query($check_query);
-    
-    if (!$result || $result->num_rows === 0) {
-        $check_query = "SELECT id FROM favorites WHERE movie_id = $film_id";
-        $result = $conn->query($check_query);
-        
-        if (!$result || $result->num_rows === 0) {
-            throw new Exception("Film dengan ID $film_id tidak ditemukan.");
-        }
-        
-        
-        $row = $result->fetch_assoc();
-        $film_id = $row['id'];
-        $debug_info['film_id_adjusted'] = $film_id;
+    // 2. Verifikasi bahwa film favorit ini milik pengguna yang sedang login
+    $stmt_check = $conn->prepare("SELECT id FROM favorites WHERE id = ? AND user_id = ?");
+    $stmt_check->bind_param("ii", $favorite_id, $logged_in_user_id);
+    $stmt_check->execute();
+    $result_check = $stmt_check->get_result();
+
+    if ($result_check->num_rows === 0) {
+        throw new Exception("Film favorit tidak ditemukan atau Anda tidak memiliki izin untuk mengubahnya.");
     }
+    $stmt_check->close();
 
+    // Proses file upload
     $file = $_FILES['poster'];
     $file_name = basename($file["name"]);
     $file_tmp = $file["tmp_name"];
     $file_size = $file["size"];
+    $file_error = $file["error"];
     $file_ext = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
 
-    $debug_info['file_info'] = $file;
-
-    // Validasi ekstensi
-    $allowed_ext = ['jpg', 'jpeg', 'png', 'gif'];
-    if (!in_array($file_ext, $allowed_ext)) {
-        throw new Exception("Format file tidak valid.");
+    // Cek jika ada error saat upload
+    if ($file_error !== UPLOAD_ERR_OK) {
+        throw new Exception("Terjadi kesalahan saat mengunggah file. Kode Error: " . $file_error);
     }
 
-    // Validasi ukuran file (maks 2MB)
+    // Validasi ekstensi file
+    $allowed_ext = ['jpg', 'jpeg', 'png', 'gif'];
+    if (!in_array($file_ext, $allowed_ext)) {
+        throw new Exception("Format file tidak valid. Hanya JPG, JPEG, PNG, GIF yang diizinkan.");
+    }
+
+    // Validasi ukuran file (misalnya, maks 2MB)
     if ($file_size > 2 * 1024 * 1024) {
         throw new Exception("Ukuran file terlalu besar. Maksimal 2MB.");
     }
 
-    // Create folder upload
-    $target_dir = "../posters/";
+    // Buat folder 'posters' jika belum ada
+    $target_dir = "../posters/"; // Sesuaikan path jika perlu
     if (!is_dir($target_dir)) {
-        $mkdir_result = mkdir($target_dir, 0777, true);
-        $debug_info['mkdir_result'] = $mkdir_result ? "Success" : "Failed";
-        if (!$mkdir_result) {
-            throw new Exception("Gagal membuat folder upload.");
+        if (!mkdir($target_dir, 0777, true)) {
+            throw new Exception("Gagal membuat folder untuk menyimpan poster.");
         }
     }
 
-    // Nama file
-    $new_file_name = "poster_" . $film_id . "_" . time() . "." . $file_ext;
+    // Buat nama file yang unik untuk menghindari penimpaan
+    $new_file_name = "poster_fav" . $favorite_id . "_user" . $logged_in_user_id . "_" . time() . "." . $file_ext;
     $target_file = $target_dir . $new_file_name;
-    $debug_info['target_file'] = $target_file;
 
-    // Upload file
-    $upload_result = move_uploaded_file($file_tmp, $target_file);
-    $debug_info['move_uploaded_file'] = $upload_result ? "Success" : "Failed";
-
-    if (!$upload_result) {
-        throw new Exception("Gagal memindahkan file.");
+    // Pindahkan file yang diupload ke direktori tujuan
+    if (!move_uploaded_file($file_tmp, $target_file)) {
+        throw new Exception("Gagal memindahkan file yang diunggah.");
     }
 
-    $poster_path = "posters/" . $new_file_name;
-    $escaped_path = $conn->real_escape_string($poster_path);
-    $sql = "UPDATE favorites SET custom_poster = '$escaped_path' WHERE id = $film_id";
-    $debug_info['sql'] = $sql;
+    // Path yang akan disimpan ke database (relatif terhadap root aplikasi Anda)
+    $poster_path_db = "posters/" . $new_file_name;
 
-    $query_result = $conn->query($sql);
-    $debug_info['query_result'] = $query_result ? "Success" : "Failed: " . $conn->error;
-
-    if (!$query_result) {
-        throw new Exception("Gagal menyimpan ke database: " . $conn->error);
+    // 3. Update path custom_poster di database HANYA untuk film favorit milik user ini
+    $stmt_update = $conn->prepare("UPDATE favorites SET custom_poster = ? WHERE id = ? AND user_id = ?");
+    $stmt_update->bind_param("sii", $poster_path_db, $favorite_id, $logged_in_user_id);
+    
+    if (!$stmt_update->execute()) {
+        // Jika update gagal, hapus file yang sudah terupload untuk konsistensi
+        if (file_exists($target_file)) {
+            unlink($target_file);
+        }
+        throw new Exception("Gagal menyimpan path poster ke database: " . $stmt_update->error);
     }
+    $stmt_update->close();
 
     echo json_encode([
         "success" => true,
-        "message" => "Poster berhasil diunggah.",
-        "poster_path" => $poster_path,
-        "debug" => $debug_info
+        "message" => "Poster berhasil diunggah dan diperbarui.",
+        "poster_path" => $poster_path_db
     ]);
-    exit;
+
 } catch (Exception $e) {
-    $debug = ob_get_clean();
-    http_response_code(500);
+    http_response_code(400); // Bad Request atau error lainnya
     echo json_encode([
         "success" => false,
-        "message" => $e->getMessage(),
-        "debug" => $debug_info ?? []
+        "message" => $e->getMessage()
     ]);
-    exit;
+} finally {
+    if (isset($conn)) {
+        $conn->close();
+    }
 }
+?>
