@@ -1,5 +1,5 @@
 <?php
-require 'db_connection.php'; // Koneksi ke database
+require 'db_connection.php';
 
 header('Content-Type: application/json');
 $input = json_decode(file_get_contents('php://input'), true);
@@ -11,9 +11,8 @@ if (!isset($input['username']) || !isset($input['email']) || !isset($input['pass
 
 $username = $input['username'];
 $email = $input['email'];
-$password = password_hash($input['password'], PASSWORD_BCRYPT); // Tetap gunakan bcrypt
+$password = password_hash($input['password'], PASSWORD_BCRYPT);
 
-// Query diperbarui untuk menyertakan email
 $stmt = $conn->prepare("INSERT INTO users (username, email, password) VALUES (?, ?, ?)");
 $stmt->bind_param("sss", $username, $email, $password);
 

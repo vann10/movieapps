@@ -1,7 +1,5 @@
-// Variabel global untuk menyimpan data film saat ini
 let currentMovie = null;
 
-// Ganti fungsi checkLoginStatus Anda dengan yang ini
 
 function checkLoginStatus() {
 $.ajax({
@@ -12,7 +10,7 @@ $.ajax({
     if (response.loggedIn) {
       $('#welcome-container').html(`👋 Halo, <strong>${response.username}</strong>! Selamat datang kembali.`);
     } else {
-      $('#welcome-container').html(`👋 Anda belum login. <a href="auth.html" class="text-blue-500 underline">Login di sini</a>`);
+      $('#welcome-container').html(`👋 Anda belum login. <a href="index.html" class="text-blue-500 underline">Login di sini</a>`);
     }
   },
   error: function(xhr, status, error) {

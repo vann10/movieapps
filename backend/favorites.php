@@ -1,25 +1,20 @@
 <?php
-// File: backend/favorites.php (Diperbaiki)
 
-// Memulai session dan memeriksa login.
-// Ini juga menangani auto-login via cookie jika ada.
 require_once 'session_config.php';
-require_once 'db_connection.php'; // Koneksi ke database
+require_once 'db_connection.php';
 
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Content-Type: application/json");
 
-// Handle preflight request (OPTIONS)
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit();
 }
 
-// Cek jika user sudah login (setelah session_config dijalankan)
 if (!isset($_SESSION['user_id'])) {
-    http_response_code(401); // Unauthorized
+    http_response_code(401); 
     echo json_encode(["error" => "Anda harus login untuk mengakses halaman ini"]);
     exit();
 }

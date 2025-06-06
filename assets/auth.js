@@ -45,8 +45,7 @@ $(document).ready(function() {
             success: function(response) {
                 if (response.success) {
                     $('#message').text(response.message).removeClass('text-red-500').addClass('text-green-500');
-                    // Redirect ke halaman utama setelah berhasil login
-                    window.location.href = 'index.html';
+                    window.location.href = 'home.html';
                 } else {
                     $('#message').text(response.message).removeClass('text-green-500').addClass('text-red-500');
                 }

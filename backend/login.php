@@ -10,7 +10,6 @@ $login_identifier = $input['username']; // Bisa username atau email
 $password = $input['password'];
 $remember_me = isset($input['remember']) && $input['remember'] === true;
 
-// Query bisa pakai username atau email
 $stmt = $conn->prepare("SELECT id, username, password FROM users WHERE username = ? OR email = ?");
 $stmt->bind_param("ss", $login_identifier, $login_identifier);
 $stmt->execute();
@@ -19,23 +18,21 @@ $result = $stmt->get_result();
 if ($result->num_rows === 1) {
     $user = $result->fetch_assoc();
     if (password_verify($password, $user['password'])) {
-        // Login berhasil, buat session
+        // Buat session
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['username'] = $user['username'];
         
 
-        // Logika untuk "Remember Me" (Cookie)
+        // Cookie
         if ($remember_me) {
             $token = bin2hex(random_bytes(32));
             $hashed_token = hash('sha256', $token);
             $user_id = $user['id'];
 
-            // Simpan HASH token ke database
             $update_stmt = $conn->prepare("UPDATE users SET remember_token = ? WHERE id = ?");
             $update_stmt->bind_param("si", $hashed_token, $user_id);
             $update_stmt->execute();
             
-            // Kirim cookie ke browser (user_id:token)
             // Cookie berlaku selama 30 hari
             setcookie('remember_me', $user_id . ':' . $token, time() + (30 * 24 * 60 * 60), "/");
         }

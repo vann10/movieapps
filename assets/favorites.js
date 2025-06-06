@@ -72,11 +72,11 @@ function checkLoginStatus() {
                     <li><a href="#sinopsis">Sinopsis</a></li>
                     <li><a href="#details">Detail Film</a></li>
                     <li><a href="#" id="cast-link">Pemeran</a></li>
-                    <li><a href="auth.html">Login</a></li>
+                    <li><a href="index.html">Login</a></li>
                 `);
                 // Jika ini halaman favorites, redirect ke login
                 if (window.location.pathname.includes('favorites.html')) {
-                    window.location.href = 'auth.html';
+                    window.location.href = 'index.html';
                 }
             }
         }
